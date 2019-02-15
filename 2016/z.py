@@ -179,21 +179,21 @@ def pass_selection(tree):
     else:
         assert(0)
 
-    if tree.mll > 80:
-        pass_mll = False
-    else:
-        pass_mll = True
+#    if tree.mll > 80:
+#        pass_mll = False
+#    else:
+#        pass_mll = True
 
 
 #    if tree.met > 35:
-    if tree.met > 70:
-#    if tree.met > 0:
+#    if tree.met > 70:
+    if tree.met > 0:
         pass_met = True
     else:
         pass_met = False
 
-    if tree.mt > 30:
-#    if tree.mt > 0:
+#    if tree.mt > 30:
+    if tree.mt > 0:
         pass_mt = True
     else:
         pass_mt = False
@@ -310,8 +310,8 @@ def fillHistogramMC(label,sample):
 
         sample["tree"].GetEntry(i)
 
-        if sample["tree"].met < 70 or sample["tree"].mt < 30:
-            continue
+#        if sample["tree"].met < 70 or sample["tree"].mt < 30:
+#            continue
 
         if sample["tree"].is_lepton1_real == '\x01':
             pass_is_lepton_real = True
@@ -347,8 +347,8 @@ for i in range(data_events_tree.GetEntries()):
     if i > 0 and i % 100000 == 0:
         print "Processed " + str(i) + " out of " + str(data_events_tree.GetEntries()) + " events"
 
-    if data_events_tree.met < 70 or data_events_tree.mt < 30:  
-        continue
+#    if data_events_tree.met < 70 or data_events_tree.mt < 30:  
+#        continue
 
     if pass_selection(data_events_tree):
         for j in range(len(variables)):
@@ -391,10 +391,6 @@ for i in range(len(variables)):
 
     hstack = ROOT.THStack()
 
-    if lepton_name == "electron" or lepton_name == "both": 
-        hsum.Add(e_to_p["hists"][i])
-        hstack.Add(e_to_p["hists"][i])
-
     for label in labels.keys():
         if labels[label]["color"] == None:
             continue
@@ -426,10 +422,6 @@ for i in range(len(variables)):
 
     j=0
     draw_legend(xpositions[j],0.84 - ypositions[j]*yoffset,data["hists"][i],"data","lp")
-
-    if lepton_name == "electron" or lepton_name == "both":
-        j=j+1
-        draw_legend(xpositions[j],0.84 - ypositions[j]*yoffset,e_to_p["hists"][i],"e->#gamma","f")
 
     for label in labels.keys():
         if labels[label]["color"] == None:

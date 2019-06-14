@@ -43,6 +43,7 @@ parser = optparse.OptionParser()
 
 
 parser.add_option('--lep',dest='lep',default='both')
+parser.add_option('--normalize_mll',dest='normalize_mll',default=False)
 parser.add_option('--overflow',dest='overflow',action='store_true',default=False)
 
 parser.add_option('--lumi',dest='lumi')
@@ -72,28 +73,40 @@ pu_weight_hist = f_pu_weights.Get("ratio")
 
 from z_labels import labels
 
-mll_index = 3
+mll_index = 4
 
-variables = ["met","lepton1_pt","lepton1_eta","mll","lepton1_phi","mt","npvs"]
-variables_labels = ["met","lepton1_pt","lepton1_eta","mll","lepton1_phi","mt","npvs"]
+variables = ["dphill","met","lepton1_pt","lepton1_eta","mll","lepton1_phi","mt","mt1","mt2","npvs","njets40","metmrawmet","rawmet"]
+variables_labels = ["dphill","met","lepton1_pt","lepton1_eta","mll","lepton1_phi","mt","mt1","mt2","npvs","njets40","metmrawmet","rawmet"]
 
 assert(len(variables) == len(variables_labels))
 
 from array import array
 
-histogram_templates = [ROOT.TH1F("met", "", 15 , 0., 300 ), ROOT.TH1F('lepton_pt', '', 8, 20., 180 ), ROOT.TH1F('lepton_eta', '', 10, -2.5, 2.5 ), ROOT.TH1F("mll","",60,60,120),ROOT.TH1F("lepton_phi","",14,-3.5,3.5), ROOT.TH1F("mt","",20,0,200), ROOT.TH1F("npvs","",51,-0.5,50.5)] 
+histogram_templates = [ROOT.TH1D('dphill','',16,0,pi),ROOT.TH1F("met", "", 30 , 0., 300 ), ROOT.TH1F('lepton_pt', '', 8, 20., 180 ), ROOT.TH1F('lepton_eta', '', 10, -2.5, 2.5 ), ROOT.TH1F("mll","",60,60,120),ROOT.TH1F("lepton_phi","",14,-3.5,3.5),ROOT.TH1F("mt","",20,0,200),ROOT.TH1F("mt1","",20,0,200),ROOT.TH1F("mt2","",20,0,200),ROOT.TH1F("npvs","",51,-0.5,50.5),ROOT.TH1D("njets40","",7,-0.5,6.5),ROOT.TH1F("metmrawmet", "", 20 , -50., 50 ),ROOT.TH1F("rawmet", "", 30 , 0.,  300 )] 
 
 assert(len(variables) == len(histogram_templates))
 
 def getVariable(varname, tree):
     if varname == "mll":
         return tree.mll
+    elif varname == "dphill":
+        return abs(deltaPhi(tree.lepton1_phi,tree.lepton2_phi))
+    elif varname == "njets40":
+        return float(tree.njets40)
     elif varname == "mt":
         return tree.mt
+    elif varname == "mt1":
+        return tree.mt1
+    elif varname == "mt2":
+        return tree.mt2
     elif varname == "npvs":
         return float(tree.npvs)
     elif varname == "met":
         return tree.met
+    elif varname == "rawmet":
+        return tree.rawmet
+    elif varname == "metmrawmet":
+        return tree.met-tree.rawmet
     elif varname == "lepton1_pt":
         return tree.lepton1_pt
     elif varname == "lepton2_pt":
@@ -112,12 +125,22 @@ def getVariable(varname, tree):
 def getXaxisLabel(varname):
     if varname == "npvs":
         return "number of PVs"
+    elif varname == "njets40":
+        return "number of jets with pt > 40 GeV"
     elif varname == "mt":
         return "m_{t} (GeV)"
+    elif varname == "mt1":
+        return "m_{t1} (GeV)"
+    elif varname == "mt2":
+        return "m_{t2} (GeV)"
     elif varname == "mll":
         return "m_{ll} (GeV)"
     elif varname == "met":
         return "MET (GeV)"
+    elif varname == "rawmet":
+        return "Raw MET (GeV)"
+    elif varname == "metmrawmet":
+        return "MET - Raw MET(GeV)"
     elif varname == "lepton1_pt":
         return "lepton 1 p_{T} (GeV)"
     elif varname == "lepton1_eta":
@@ -130,6 +153,8 @@ def getXaxisLabel(varname):
         return "lepton 2 #eta"
     elif varname == "lepton2_phi":
         return "lepton 2 #phi"
+    elif varname == "dphill":
+         return "#Delta#phi(l,l)"
     else:
         assert(0)
 
@@ -184,22 +209,22 @@ def pass_selection(tree):
 #    else:
 #        pass_mll = True
 
-
 #    if tree.met > 35:
-#    if tree.met > 70:
     if tree.met > 0:
+#    if tree.met > 0:
         pass_met = True
     else:
         pass_met = False
 
-#    if tree.mt > 30:
-    if tree.mt > 0:
+    if tree.puppimt > 0:
+#    if tree.mt > 0:
         pass_mt = True
     else:
         pass_mt = False
 
 
-    if pass_lepton_pt and pass_lepton_selection and  pass_mll and pass_lepton_flavor and pass_met and pass_mt:
+#    if pass_lepton_pt and pass_lepton_selection and  pass_mll and pass_lepton_flavor and (pass_met and pass_mt) and tree.njets15 == 1 and tree.njets20 == 0 and abs((tree.met-tree.rawmet)/tree.rawmet) > 0.001:
+    if pass_lepton_pt and pass_lepton_selection and  pass_mll and pass_lepton_flavor and (pass_met and pass_mt) and tree.njets40 != -1:
         return True
     else:
         return False
@@ -258,10 +283,17 @@ def draw_legend(x1,y1,hist,label,options):
 
 if lepton_name == "muon":
 #    data_file = ROOT.TFile.Open("/afs/cern.ch/project/afs/var/ABS/recover/R.1935065321.08020759/data/wg/single_muon.root")
-    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/data/z/2016/double_muon.root")
+#    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/data/z/2016/double_muon.root")
+    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/data/z/2016/14Dec2018/double_muon.root")
 elif lepton_name == "electron":
 #    data_file = ROOT.TFile.Open("/afs/cern.ch/project/afs/var/ABS/recover/R.1935065321.08020759/data/wg/single_electron.root")
-    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/data/z/2016/double_electron.root")
+#    data_file = ROOT.TFile.Open("/afs/cern.ch/user/a/amlevin/2016_nanoaodsim_data/CMSSW_9_4_4/src/Merged.root") 
+#    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/data/z/2016/double_electron.root.bak")
+#    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/data/z/2016/double_eg.root")
+    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/data/z/2016/14Dec2018/double_eg.root")
+#    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/tmp/double_electron.root")
+#    data_file = ROOT.TFile.Open("/eos/user/a/amlevin/tmp/double_electron.root")
+#    data_file = ROOT.TFile.Open("/afs/cern.ch/user/a/amlevin/z/2016/Merged_Skim.root")
 elif lepton_name == "both":
     data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/data/z/2016/double_lepton.root")
 else:
@@ -280,7 +312,6 @@ for label in labels.keys():
         sample["file"] = ROOT.TFile.Open(sample["filename"])
         sample["tree"] = sample["file"].Get("Events")
         sample["nweightedevents"] = sample["file"].Get("nWeightedEvents").GetBinContent(1)
-
 
 data = {}
 
@@ -310,8 +341,9 @@ def fillHistogramMC(label,sample):
 
         sample["tree"].GetEntry(i)
 
-#        if sample["tree"].met < 70 or sample["tree"].mt < 30:
-#            continue
+#        if (sample["tree"].puppimet < 0 or sample["tree"].puppimt < 0) or not (sample["tree"].njets15 == 1 and sample["tree"].njets20 == 0) or abs((sample["tree"].met-sample["tree"].rawmet)/sample["tree"].rawmet) < 0.001:
+        if (sample["tree"].met < 0 or sample["tree"].puppimt < 0 or sample["tree"].njets40 == -1):
+           continue
 
         if sample["tree"].is_lepton1_real == '\x01':
             pass_is_lepton_real = True
@@ -320,7 +352,7 @@ def fillHistogramMC(label,sample):
 
         weight = sample["xs"] * 1000 * 35.9 / sample["nweightedevents"]
         weight *= pu_weight_hist.GetBinContent(pu_weight_hist.FindFixBin(sample["tree"].npu))    
-        weight *= sample["tree"].L1PreFiringWeight 
+#        weight *= sample["tree"].L1PreFiringWeight 
 
         if sample["tree"].gen_weight < 0:
             weight = - weight
@@ -347,10 +379,12 @@ for i in range(data_events_tree.GetEntries()):
     if i > 0 and i % 100000 == 0:
         print "Processed " + str(i) + " out of " + str(data_events_tree.GetEntries()) + " events"
 
-#    if data_events_tree.met < 70 or data_events_tree.mt < 30:  
-#        continue
+#    if (data_events_tree.puppimet < 70 or data_events_tree.puppimt < 0) or not (data_events_tree.njets15 == 1 and data_events_tree.njets20 == 0) or abs((data_events_tree.met-data_events_tree.rawmet)/data_events_tree.rawmet) < 0.001:  
+    if (data_events_tree.met < 0 or data_events_tree.puppimt < 0 or data_events_tree.njets40 == -1):
+        continue
 
     if pass_selection(data_events_tree):
+#        print str(getVariable("dphill",data_events_tree))+" "+str(data_events_tree.run) + " "+str(data_events_tree.lumi) + " " + str(data_events_tree.event)
         for j in range(len(variables)):
             fillHistogram(data["hists"][j],getVariable(variables[j],data_events_tree))
 
@@ -368,12 +402,20 @@ for label in labels.keys():
         labels[label]["hists"][i].SetFillStyle(1001)
         labels[label]["hists"][i].SetLineColor(labels[label]["color"])
 
-labels["z+jets"]["hists"][mll_index].Print("all")
-data["hists"][mll_index].Print("all")
+if options.normalize_mll:
+    labels["z+jets"]["hists"][mll_index].Scale(data["hists"][mll_index].Integral()/labels["z+jets"]["hists"][mll_index].Integral())
+
+#labels["z+jets"]["hists"][0].Scale(data["hists"][0].Integral()/labels["z+jets"]["hists"][0].Integral())
 
 for i in range(len(variables)):
 
     data["hists"][i].Print("all")
+    labels["z+jets"]["hists"][i].Print("all")
+
+    ratio = data["hists"][i].Clone("ratio_"+variables_labels[i]+"_"+str(i))
+    ratio.Scale(labels["z+jets"]["hists"][i].Integral()/ratio.Integral())
+    ratio.Divide(labels["z+jets"]["hists"][i])
+    ratio.Print("all")
 
     data["hists"][i].SetMarkerStyle(ROOT.kFullCircle)
     data["hists"][i].SetLineWidth(3)

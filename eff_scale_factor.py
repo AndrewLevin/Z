@@ -2,25 +2,25 @@ import ROOT
 
 #from https://twiki.cern.ch/twiki/bin/view/CMS/EgammaIDRecipesRun2#Efficiencies_and_scale_factors and https://twiki.cern.ch/twiki/bin/view/CMS/MuonWorkInProgressAndPagResults
 
-photon_id_sf_filename = "egammaEffi.txt_EGM2D.root.photon.id"
+photon_id_sf_filename = "eff_scale_factors/2016/egammaEffi.txt_EGM2D.root.photon.id"
 
 photon_id_sf_file = ROOT.TFile(photon_id_sf_filename,"read")
 
 photon_id_sf = photon_id_sf_file.Get("EGamma_SF2D")
 
-electron_id_sf_filename = "egammaEffi.txt_EGM2D.root.electron.id"
+electron_id_sf_filename = "eff_scale_factors/2016/egammaEffi.txt_EGM2D.root.electron.id"
 
 electron_id_sf_file = ROOT.TFile(electron_id_sf_filename,"read")
 
 electron_id_sf = electron_id_sf_file.Get("EGamma_SF2D")
 
-electron_reco_sf_filename = "egammaEffi.txt_EGM2D.root.electron.reco"
+electron_reco_sf_filename = "eff_scale_factors/2016/egammaEffi.txt_EGM2D.root.electron.reco"
 
 electron_reco_sf_file = ROOT.TFile(electron_reco_sf_filename,"read")
 
 electron_reco_sf = electron_reco_sf_file.Get("EGamma_SF2D")
 
-muon_iso_sf_filename = "EfficienciesAndSF_GH.root.iso"
+muon_iso_sf_filename = "eff_scale_factors/2016/EfficienciesAndSF_GH.root.iso"
 
 muon_iso_sf_file = ROOT.TFile(muon_iso_sf_filename,"read")
 
@@ -28,7 +28,7 @@ muon_iso_sf_file.cd("TightISO_TightID_pt_eta")
 
 muon_iso_sf = muon_iso_sf_file.Get("TightISO_TightID_pt_eta/abseta_pt_ratio")
 
-muon_id_sf_filename = "EfficienciesAndSF_GH.root.id"
+muon_id_sf_filename = "eff_scale_factors/2016/EfficienciesAndSF_GH.root.id"
 
 muon_id_sf_file = ROOT.TFile(muon_id_sf_filename,"read")
 

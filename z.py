@@ -1,4 +1,4 @@
-data_driven = True
+pu1data_driven = True
 
 def fillHistogram(hist,value,weight=1):
     if options.overflow:
@@ -15,7 +15,7 @@ import style
 
 import optparse
 
-from math import hypot, pi, sqrt
+from math import hypot, pi, sqrt, cos, sin, atan2
 
 from pprint import pprint
 
@@ -43,7 +43,10 @@ parser = optparse.OptionParser()
 
 
 parser.add_option('--lep',dest='lep',default='both')
-parser.add_option('--normalize_mll',dest='normalize_mll',default=False)
+parser.add_option('--normalize_mll',dest='normalize_mll',action='store_true',default=False)
+parser.add_option('--make_recoil_trees',dest='make_recoil_trees',action='store_true',default=False)
+parser.add_option('--apply_recoil_corr',dest='apply_recoil_corr',action='store_true',default=False)
+parser.add_option('--make_plots',dest='make_plots',action='store_true',default=False)
 parser.add_option('--overflow',dest='overflow',action='store_true',default=False)
 
 parser.add_option('--lumi',dest='lumi')
@@ -67,6 +70,70 @@ import eff_scale_factor
 
 import ROOT
 
+from array import array
+
+if options.make_recoil_trees:
+
+    recoil_outfile = ROOT.TFile("recoil.root",'recreate')
+
+    data_recoil_tree = ROOT.TTree("data_recoil_tree","data recoil tree")
+
+    data_u1= array( 'f', [ 0 ] )
+    data_recoil_tree.Branch( 'u1', data_u1, 'u1/F')
+
+    data_u2= array( 'f', [ 0 ] )
+    data_recoil_tree.Branch( 'u2', data_u2, 'u2/F')
+
+    data_zpt= array( 'f', [ 0 ] )
+    data_recoil_tree.Branch( 'zpt', data_zpt, 'zpt/F')
+
+    data_weight= array( 'f', [ 0 ] )  #will always be 1
+    data_recoil_tree.Branch( 'weight', data_weight, 'weight/F')
+
+    mc_recoil_tree = ROOT.TTree("mc_recoil_tree","mc recoil tree")
+
+    mc_u1= array( 'f', [ 0 ] )
+    mc_recoil_tree.Branch( 'u1', mc_u1, 'u1/F')
+
+    mc_u2= array( 'f', [ 0 ] )
+    mc_recoil_tree.Branch( 'u2', mc_u2, 'u2/F')
+
+    mc_zpt= array( 'f', [ 0 ] )
+    mc_recoil_tree.Branch( 'zpt', mc_zpt, 'zpt/F')
+
+    mc_weight= array( 'f', [ 0 ] )
+    mc_recoil_tree.Branch( 'weight', mc_weight, 'weight/F')
+
+met_weight_list  = [0,1.04438,1.03441,1.01202,0.97558,0.934234,0.889209,0.859616,0.838646,0.795616,0.838776,0.79236,0.937482,1.38006,1.73772,3.40153,6.16593,20.019,4.56341,4.30805,15.3002,0,33.3087,0,1.49879,0,0,0.688555,0,0,0,0]
+
+recoil_weight_list = [0,1.05308,1.03883,1.01358,0.981316,0.952414,0.929029,0.917159,0.908528,0.90361,0.883288,0.918111,0.944326,0.943427,0.956951,0.905486,0.824449,1.718,1.69566,2.8904,0.123703,0.37997]
+
+zpt_weight_list = [0,1.02548,0.964365,0.975732,0.989607,1.01585,1.08599,1.17429,1.254,1.38018,1.48303,1.49296,1.92722,1.96488,2.64043,3.13321,2.54325,2.40273,4.45963,3.96664,0,7.50793]
+
+recoil_zpt_weight_list = [0,1.05216,1.03766,1.01483,0.984147,0.956141,0.92989,0.911838,0.892875,0.872895,0.835284,0.842361,0.840118,0.806624,0.753405,0.719853,0.583694,1.18084,0.79967,1.09567,0.10118,0.0992985]
+
+zpt_weight_hist = ROOT.TH1F("zpt weight hist", "", 20, 0., 200 )
+met_weight_hist = ROOT.TH1F("met weight hist", "", 30 , 0., 300 )
+recoil_weight_hist = ROOT.TH1F("recoil weight hist", "", 20 , 0., 200 )
+recoil_zpt_weight_hist = ROOT.TH1F("recoil post zpt weight hist", "", 20 , 0., 200 )
+
+for i in range(met_weight_hist.GetNbinsX()+2):
+    met_weight_hist.SetBinContent(i,met_weight_list[i])
+
+for i in range(recoil_weight_hist.GetNbinsX()+2):
+    recoil_weight_hist.SetBinContent(i,recoil_weight_list[i])
+
+for i in range(zpt_weight_hist.GetNbinsX()+2):
+    zpt_weight_hist.SetBinContent(i,zpt_weight_list[i])
+
+for i in range(recoil_zpt_weight_hist.GetNbinsX()+2):
+    recoil_zpt_weight_hist.SetBinContent(i,recoil_zpt_weight_list[i])
+
+met_weight_hist.Print("all")
+recoil_weight_hist.Print("all")
+recoil_zpt_weight_hist.Print("all")
+zpt_weight_hist.Print("all")
+
 f_pu_weights = ROOT.TFile("/afs/cern.ch/user/a/amlevin/PileupWeights2016.root")
 
 pu_weight_hist = f_pu_weights.Get("ratio")
@@ -75,18 +142,31 @@ from z_labels import labels
 
 mll_index = 4
 
-variables = ["dphill","met","lepton1_pt","lepton1_eta","mll","lepton1_phi","mt","mt1","mt2","npvs","njets40","metmrawmet","rawmet"]
-variables_labels = ["dphill","met","lepton1_pt","lepton1_eta","mll","lepton1_phi","mt","mt1","mt2","npvs","njets40","metmrawmet","rawmet"]
+#variables = []
+#variables_labels = []
+
+if options.make_plots:    
+    variables = ["dphill","met","lepton1_pt","lepton1_eta","mll","lepton1_phi","mt","mt1","mt2","npvs","njets40","metmrawmet","rawmet","recoil","z_pt","corrmet","recoil1","recoil2","corrrecoil1","corrrecoil2"]
+    variables_labels = ["dphill","met","lepton1_pt","lepton1_eta","mll","lepton1_phi","mt","mt1","mt2","npvs","njets40","metmrawmet","rawmet","recoil","z_pt","corrmet","recoil1","recoil2","corrrecoil1","corrrecoil2"]
+else:
+    variables = []
+    variables_labels = []
 
 assert(len(variables) == len(variables_labels))
 
 from array import array
 
-histogram_templates = [ROOT.TH1D('dphill','',16,0,pi),ROOT.TH1F("met", "", 30 , 0., 300 ), ROOT.TH1F('lepton_pt', '', 8, 20., 180 ), ROOT.TH1F('lepton_eta', '', 10, -2.5, 2.5 ), ROOT.TH1F("mll","",60,60,120),ROOT.TH1F("lepton_phi","",14,-3.5,3.5),ROOT.TH1F("mt","",20,0,200),ROOT.TH1F("mt1","",20,0,200),ROOT.TH1F("mt2","",20,0,200),ROOT.TH1F("npvs","",51,-0.5,50.5),ROOT.TH1D("njets40","",7,-0.5,6.5),ROOT.TH1F("metmrawmet", "", 20 , -50., 50 ),ROOT.TH1F("rawmet", "", 30 , 0.,  300 )] 
+
+if options.make_plots: 
+    histogram_templates = [ROOT.TH1D('dphill','',16,0,pi),ROOT.TH1F("met", "", 40 , 0., 200 ), ROOT.TH1F('lepton_pt', '', 8, 20., 180 ), ROOT.TH1F('lepton_eta', '', 10, -2.5, 2.5 ), ROOT.TH1F("mll","",60,60,120),ROOT.TH1F("lepton_phi","",14,-3.5,3.5),ROOT.TH1F("mt","",20,0,200),ROOT.TH1F("mt1","",20,0,200),ROOT.TH1F("mt2","",20,0,200),ROOT.TH1F("npvs","",51,-0.5,50.5),ROOT.TH1D("njets40","",7,-0.5,6.5),ROOT.TH1F("metmrawmet", "", 20 , -50., 50 ),ROOT.TH1F("rawmet", "", 30 , 0.,  300 ),ROOT.TH1F("recoil","",20,0,200),ROOT.TH1F('z_pt', '', 20, 0., 200 ),ROOT.TH1F("corrmet", "", 40 , 0., 200 ),ROOT.TH1F("recoil1","",20,-100,100),ROOT.TH1F("recoil2","",20,-100,100),ROOT.TH1F("corrrecoil1","",20,-100,100),ROOT.TH1F("corrrecoil2","",20,0-100,100)] 
+else:
+    histogram_templates = []
+
+#histogram_templates = []
 
 assert(len(variables) == len(histogram_templates))
 
-def getVariable(varname, tree):
+def getVariable(varname, tree, corrmet = None, corrmetphi = None):
     if varname == "mll":
         return tree.mll
     elif varname == "dphill":
@@ -95,6 +175,30 @@ def getVariable(varname, tree):
         return float(tree.njets40)
     elif varname == "mt":
         return tree.mt
+    elif varname == "z_pt":
+        return sqrt(pow(tree.lepton1_pt*cos(tree.lepton1_phi) + tree.lepton2_pt*cos(tree.lepton2_phi),2)+pow(tree.lepton1_pt*sin(tree.lepton1_phi) + tree.lepton2_pt*sin(tree.lepton2_phi),2))
+    elif varname == "z_phi":
+        return atan2(tree.lepton1_pt*sin(tree.lepton1_phi) + tree.lepton2_pt*sin(tree.lepton2_phi),tree.lepton1_pt*cos(tree.lepton1_phi) + tree.lepton2_pt*cos(tree.lepton2_phi))
+    elif varname == "recoil":
+        return sqrt(pow(tree.met*cos(tree.metphi) + tree.lepton1_pt*cos(tree.lepton1_phi) + tree.lepton2_pt*cos(tree.lepton2_phi),2)+pow(tree.met*sin(tree.metphi) + tree.lepton1_pt*sin(tree.lepton1_phi) + tree.lepton2_pt*sin(tree.lepton2_phi),2))
+    elif varname == "corrrecoil":
+        return sqrt(pow(corrmet*cos(corrmetphi) + tree.lepton1_pt*cos(tree.lepton1_phi) + tree.lepton2_pt*cos(tree.lepton2_phi),2)+pow(corrmet*sin(corrmetphi) + tree.lepton1_pt*sin(tree.lepton1_phi) + tree.lepton2_pt*sin(tree.lepton2_phi),2))
+    elif varname == "recoil1":
+        z_phi = atan2(tree.lepton1_pt*sin(tree.lepton1_phi) + tree.lepton2_pt*sin(tree.lepton2_phi),tree.lepton1_pt*cos(tree.lepton1_phi) + tree.lepton2_pt*cos(tree.lepton2_phi))
+        return cos(z_phi)*(-tree.met*cos(tree.metphi) - tree.lepton1_pt*cos(tree.lepton1_phi) - tree.lepton2_pt*cos(tree.lepton2_phi)) + sin(z_phi)*(-tree.met*sin(tree.metphi) - tree.lepton1_pt*sin(tree.lepton1_phi) - tree.lepton2_pt*sin(tree.lepton2_phi))
+    elif varname == "recoil2":
+        z_phi = atan2(tree.lepton1_pt*sin(tree.lepton1_phi) + tree.lepton2_pt*sin(tree.lepton2_phi),tree.lepton1_pt*cos(tree.lepton1_phi) + tree.lepton2_pt*cos(tree.lepton2_phi))
+        return -sin(z_phi)*(-tree.met*cos(tree.metphi) - tree.lepton1_pt*cos(tree.lepton1_phi) - tree.lepton2_pt*cos(tree.lepton2_phi)) + cos(z_phi)*(-tree.met*sin(tree.metphi) - tree.lepton1_pt*sin(tree.lepton1_phi) - tree.lepton2_pt*sin(tree.lepton2_phi))
+    elif varname == "corrrecoil1":
+        z_phi = atan2(tree.lepton1_pt*sin(tree.lepton1_phi) + tree.lepton2_pt*sin(tree.lepton2_phi),tree.lepton1_pt*cos(tree.lepton1_phi) + tree.lepton2_pt*cos(tree.lepton2_phi))
+        return cos(z_phi)*(-corrmet*cos(corrmetphi) - tree.lepton1_pt*cos(tree.lepton1_phi) - tree.lepton2_pt*cos(tree.lepton2_phi)) + sin(z_phi)*(-corrmet*sin(corrmetphi) - tree.lepton1_pt*sin(tree.lepton1_phi) - tree.lepton2_pt*sin(tree.lepton2_phi))
+    elif varname == "corrrecoil2":
+        z_phi = atan2(tree.lepton1_pt*sin(tree.lepton1_phi) + tree.lepton2_pt*sin(tree.lepton2_phi),tree.lepton1_pt*cos(tree.lepton1_phi) + tree.lepton2_pt*cos(tree.lepton2_phi))
+        return -sin(z_phi)*(-corrmet*cos(corrmetphi) - tree.lepton1_pt*cos(tree.lepton1_phi) - tree.lepton2_pt*cos(tree.lepton2_phi)) + cos(z_phi)*(-corrmet*sin(corrmetphi) - tree.lepton1_pt*sin(tree.lepton1_phi) - tree.lepton2_pt*sin(tree.lepton2_phi))
+    elif varname == "recoil_x":
+        return -tree.met*cos(tree.metphi) - tree.lepton1_pt*cos(tree.lepton1_phi) - tree.lepton2_pt*cos(tree.lepton2_phi)
+    elif varname == "recoil_y":
+        return -tree.met*sin(tree.metphi) - tree.lepton1_pt*sin(tree.lepton1_phi) - tree.lepton2_pt*sin(tree.lepton2_phi)
     elif varname == "mt1":
         return tree.mt1
     elif varname == "mt2":
@@ -102,7 +206,15 @@ def getVariable(varname, tree):
     elif varname == "npvs":
         return float(tree.npvs)
     elif varname == "met":
-        return tree.met
+        if tree.met > 200:
+            return 199.99
+        else:
+            return tree.met
+    elif varname == "corrmet":
+        if corrmet > 200:
+            return 199.99
+        else:
+            return corrmet
     elif varname == "rawmet":
         return tree.rawmet
     elif varname == "metmrawmet":
@@ -127,6 +239,18 @@ def getXaxisLabel(varname):
         return "number of PVs"
     elif varname == "njets40":
         return "number of jets with pt > 40 GeV"
+    elif varname == "recoil":
+        return "recoil"
+    elif varname == "recoil1":
+        return "recoil1"
+    elif varname == "recoil2":
+        return "recoil2"
+    elif varname == "corrrecoil1":
+        return "corrected recoil1"
+    elif varname == "corrrecoil2":
+        return "corrected recoil2"
+    elif varname == "z_pt":
+        return "Z p_{t} (GeV)"
     elif varname == "mt":
         return "m_{t} (GeV)"
     elif varname == "mt1":
@@ -137,6 +261,8 @@ def getXaxisLabel(varname):
         return "m_{ll} (GeV)"
     elif varname == "met":
         return "MET (GeV)"
+    elif varname == "corrmet":
+        return "corrected MET (GeV)"
     elif varname == "rawmet":
         return "Raw MET (GeV)"
     elif varname == "metmrawmet":
@@ -224,7 +350,7 @@ def pass_selection(tree):
 
 
 #    if pass_lepton_pt and pass_lepton_selection and  pass_mll and pass_lepton_flavor and (pass_met and pass_mt) and tree.njets15 == 1 and tree.njets20 == 0 and abs((tree.met-tree.rawmet)/tree.rawmet) > 0.001:
-    if pass_lepton_pt and pass_lepton_selection and  pass_mll and pass_lepton_flavor and (pass_met and pass_mt) and tree.njets40 != -1:
+    if pass_lepton_pt and pass_lepton_selection and  pass_mll and pass_lepton_flavor and (pass_met and pass_mt) and tree.njets40 == 0:
         return True
     else:
         return False
@@ -284,13 +410,13 @@ def draw_legend(x1,y1,hist,label,options):
 if lepton_name == "muon":
 #    data_file = ROOT.TFile.Open("/afs/cern.ch/project/afs/var/ABS/recover/R.1935065321.08020759/data/wg/single_muon.root")
 #    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/data/z/2016/double_muon.root")
-    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/data/z/2016/14Dec2018/double_muon.root")
+    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/data/z/2016/1June2019/double_muon.root")
 elif lepton_name == "electron":
 #    data_file = ROOT.TFile.Open("/afs/cern.ch/project/afs/var/ABS/recover/R.1935065321.08020759/data/wg/single_electron.root")
 #    data_file = ROOT.TFile.Open("/afs/cern.ch/user/a/amlevin/2016_nanoaodsim_data/CMSSW_9_4_4/src/Merged.root") 
 #    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/data/z/2016/double_electron.root.bak")
 #    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/data/z/2016/double_eg.root")
-    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/data/z/2016/14Dec2018/double_eg.root")
+    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/data/z/2016/1June2019/double_eg.root")
 #    data_file = ROOT.TFile.Open("/afs/cern.ch/work/a/amlevin/tmp/double_electron.root")
 #    data_file = ROOT.TFile.Open("/eos/user/a/amlevin/tmp/double_electron.root")
 #    data_file = ROOT.TFile.Open("/afs/cern.ch/user/a/amlevin/z/2016/Merged_Skim.root")
@@ -329,6 +455,20 @@ c1 = ROOT.TCanvas("c1", "c1",5,50,500,500);
 
 ROOT.gROOT.cd()
 
+ROOT.gROOT.ProcessLine("#include \"/afs/cern.ch/user/a/amlevin/recoil_corrections/MetTools/RecoilCorrections/RecoilCorrector.hh\"")
+
+#recoilCorrector = ROOT.RecoilCorrector("/afs/cern.ch/user/a/amlevin/recoil_corrections/MetTools/RecoilCorrections/mc/fits_pf.root","fcnPF") 
+#recoilCorrector = ROOT.RecoilCorrector("/afs/cern.ch/user/a/amlevin/recoil_corrections/MetTools/RecoilCorrections/mc/fits_pf.root","grPF") 
+#recoilCorrector = ROOT.RecoilCorrector("/afs/cern.ch/user/a/amlevin/recoil_corrections/MetTools/RecoilCorrections/mcmyptbinning/fits_pf.root","grPF") 
+recoilCorrector = ROOT.RecoilCorrector("/afs/cern.ch/user/a/amlevin/recoil_corrections/MetTools/RecoilCorrections/mcweightsmyptbinning/fits_pf.root","grPF") 
+#recoilCorrector.addDataFile("/afs/cern.ch/user/a/amlevin/recoil_corrections/MetTools/RecoilCorrections/data/fits_pf.root")
+recoilCorrector.addDataFile("/afs/cern.ch/user/a/amlevin/recoil_corrections/MetTools/RecoilCorrections/datamyptbinning/fits_pf.root")
+recoilCorrector.addMCFile("/afs/cern.ch/user/a/amlevin/recoil_corrections/MetTools/RecoilCorrections/mcweightsmyptbinning/fits_pf.root")
+#recoilCorrector.addMCFile("/afs/cern.ch/user/a/amlevin/recoil_corrections/MetTools/RecoilCorrections/data/fits_pf.root")
+#recoilCorrector.addDataFile("/afs/cern.ch/user/a/amlevin/recoil_corrections/MetTools/RecoilCorrections/mc/fits_pf.root")
+#recoilCorrector.addFileWithGraph("/afs/cern.ch/user/a/amlevin/recoil_corrections/MetTools/RecoilCorrections/mc/fits_pf.root")
+recoilCorrector.addFileWithGraph("/afs/cern.ch/user/a/amlevin/recoil_corrections/MetTools/RecoilCorrections/datamyptbinning/fits_pf.root")
+
 def fillHistogramMC(label,sample):
 
     print "Running over sample " + str(sample["filename"])
@@ -341,9 +481,53 @@ def fillHistogramMC(label,sample):
 
         sample["tree"].GetEntry(i)
 
+#        if abs(sample["tree"].genzpt - 129.183) > 0.001:
+#            continue
+        
+        corrMet = sample["tree"].met
+        corrMetPhi = sample["tree"].metphi
+
+        if options.apply_recoil_corr:
+
+#            corrMet = ROOT.Double()
+#            corrMetPhi = ROOT.Double()
+            corrMet = ROOT.Double(sample["tree"].met)
+            corrMetPhi = ROOT.Double(sample["tree"].metphi)
+            genVPt = ROOT.Double(getVariable("z_pt",sample["tree"]))
+            genVPhi = ROOT.Double(getVariable("z_phi",sample["tree"]))
+#            genVPt = ROOT.Double(sample["tree"].genzpt)
+#            genVPhi = ROOT.Double(sample["tree"].genzphi)
+            dileptonPt = ROOT.Double(getVariable("z_pt",sample["tree"]))
+            dileptonPhi = ROOT.Double(getVariable("z_phi",sample["tree"]))
+#            dileptonPt = ROOT.Double(sample["tree"].genzpt)
+#            dileptonPhi = ROOT.Double(sample["tree"].genzphi)
+            pu1= ROOT.Double()
+            pu2= ROOT.Double()
+
+#            recoilCorrector.CorrectType2(corrMet,corrMetPhi,genVPt,genVPhi,dileptonPt,dileptonPhi,pu1,pu2,-1)
+            recoilCorrector.CorrectType2FromGraph(corrMet,corrMetPhi,genVPt,genVPhi,dileptonPt,dileptonPhi,pu1,pu2,0,0)
+#            recoilCorrector.CorrectType0(corrMet,corrMetPhi,genVPt,genVPhi,dileptonPt,dileptonPhi,pu1,pu2,0)
+
+#        print corrMet
+
+#            if corrMet > 70:
+#                print str(getVariable("z_pt",sample["tree"])) + " " + str(sample["tree"].met) + " " + str(corrMet)
+
+
 #        if (sample["tree"].puppimet < 0 or sample["tree"].puppimt < 0) or not (sample["tree"].njets15 == 1 and sample["tree"].njets20 == 0) or abs((sample["tree"].met-sample["tree"].rawmet)/sample["tree"].rawmet) < 0.001:
-        if (sample["tree"].met < 0 or sample["tree"].puppimt < 0 or sample["tree"].njets40 == -1):
+#        if (sample["tree"].met < 0 or sample["tree"].puppimt < 0 or sample["tree"].njets40 != 0):
+#        if (corrMet < 60 or sample["tree"].puppimt < 0 or sample["tree"].njets40 != 0 or getVariable("z_pt",sample["tree"]) > 10 or getVariable("z_pt",sample["tree"]) < 9):
+#        if (corrMet < 60 or sample["tree"].puppimt < 0 or sample["tree"].njets40 != 0):
+#        if (sample["tree"].met < 60 or sample["tree"].puppimt < 0 or sample["tree"].njets40 != 0):
+#        if (abs(getVariable("corrrecoil1",sample["tree"],corrMet,corrMetPhi)) < 60 or sample["tree"].puppimt < 0 or sample["tree"].njets40 != 0 or getVariable("z_pt",sample["tree"]) > 10 or getVariable("z_pt",sample["tree"]) < 9):
+#        if (sample["tree"].met < 70 or sample["tree"].puppimt < 0 or sample["tree"].njets40 != 0 or getVariable("z_pt",sample["tree"]) > 10 or getVariable("z_pt",sample["tree"]) < 9):
+#        if (sample["tree"].met < 70 or sample["tree"].puppimt < 0 or sample["tree"].njets40 != 0 or getVariable("z_pt",sample["tree"]) > 2):
+#        if (corrMet < 70 or sample["tree"].puppimt < 0 or sample["tree"].njets40 != 0):
+#        if (sample["tree"].met < 70 or sample["tree"].puppimt < 0 or sample["tree"].njets40 != 0):
+#        if (sample["tree"].met < 0 or sample["tree"].puppimt < 0 or sample["tree"].njets40 != 0):
+        if False:
            continue
+
 
         if sample["tree"].is_lepton1_real == '\x01':
             pass_is_lepton_real = True
@@ -352,6 +536,10 @@ def fillHistogramMC(label,sample):
 
         weight = sample["xs"] * 1000 * 35.9 / sample["nweightedevents"]
         weight *= pu_weight_hist.GetBinContent(pu_weight_hist.FindFixBin(sample["tree"].npu))    
+#        weight *= met_weight_hist.GetBinContent(met_weight_hist.FindFixBin(sample["tree"].met))    
+#        weight *= recoil_weight_hist.GetBinContent(recoil_weight_hist.FindFixBin(getVariable("recoil",sample["tree"])))    
+#        weight *= zpt_weight_hist.GetBinContent(zpt_weight_hist.FindFixBin(getVariable("z_pt",sample["tree"])))    
+#        weight *= recoil_zpt_weight_hist.GetBinContent(recoil_zpt_weight_hist.FindFixBin(getVariable("recoil",sample["tree"])))    
 #        weight *= sample["tree"].L1PreFiringWeight 
 
         if sample["tree"].gen_weight < 0:
@@ -367,26 +555,50 @@ def fillHistogramMC(label,sample):
         else:
             assert(0)
 
-        for j in range(len(variables)):
-            fillHistogram(label["hists"][j],getVariable(variables[j],sample["tree"]),weight)    
+        if options.make_recoil_trees:
+            mc_zpt[0] = getVariable("z_pt",sample["tree"])
+            mc_u1[0] = getVariable("recoil1",sample["tree"])
+            mc_u2[0] = getVariable("recoil2",sample["tree"])
+            mc_weight[0] = weight
+            mc_recoil_tree.Fill()
+
+        if options.make_plots:    
+            for j in range(len(variables)):
+                fillHistogram(label["hists"][j],getVariable(variables[j],sample["tree"],corrMet,corrMetPhi),weight)    
 
 print "Running over data"
 print "data_events_tree.GetEntries() = " + str(data_events_tree.GetEntries())
 
 for i in range(data_events_tree.GetEntries()):
+    
     data_events_tree.GetEntry(i)
 
     if i > 0 and i % 100000 == 0:
         print "Processed " + str(i) + " out of " + str(data_events_tree.GetEntries()) + " events"
 
 #    if (data_events_tree.puppimet < 70 or data_events_tree.puppimt < 0) or not (data_events_tree.njets15 == 1 and data_events_tree.njets20 == 0) or abs((data_events_tree.met-data_events_tree.rawmet)/data_events_tree.rawmet) < 0.001:  
-    if (data_events_tree.met < 0 or data_events_tree.puppimt < 0 or data_events_tree.njets40 == -1):
+#    if (abs(getVariable("corrrecoil1",data_events_tree,data_events_tree.met,data_events_tree.metphi)) < 60 or data_events_tree.puppimt < 0 or data_events_tree.njets40 != 0 or getVariable("z_pt",data_events_tree) > 10 or getVariable("z_pt",data_events_tree) < 9):
+#    if (data_events_tree.met < 60 or data_events_tree.puppimt < 0 or data_events_tree.njets40 != 0 or getVariable("z_pt",data_events_tree) > 10 or getVariable("z_pt",data_events_tree) < 9):
+#    if (data_events_tree.met < 60 or data_events_tree.puppimt < 0 or data_events_tree.njets40 != 0):
+#    if (data_events_tree.met < 0 or data_events_tree.puppimt < 0 or data_events_tree.njets40 != 0):
+    if False:
         continue
 
     if pass_selection(data_events_tree):
 #        print str(getVariable("dphill",data_events_tree))+" "+str(data_events_tree.run) + " "+str(data_events_tree.lumi) + " " + str(data_events_tree.event)
-        for j in range(len(variables)):
-            fillHistogram(data["hists"][j],getVariable(variables[j],data_events_tree))
+
+        if options.make_recoil_trees:
+
+            data_zpt[0] = getVariable("z_pt",data_events_tree)
+            data_u1[0] = getVariable("recoil1",data_events_tree)
+            data_u2[0] = getVariable("recoil2",data_events_tree)
+            data_weight[0] = float(1)
+            data_recoil_tree.Fill()
+
+        if options.make_plots:            
+
+            for j in range(len(variables)):
+                fillHistogram(data["hists"][j],getVariable(variables[j],data_events_tree,data_events_tree.met,data_events_tree.metphi))
 
 for label in labels.keys():
 
@@ -502,3 +714,11 @@ for i in range(len(variables)):
 
 c1.Close()
 
+if options.make_recoil_trees:
+
+    recoil_outfile.cd()
+    
+    data_recoil_tree.Write()
+    mc_recoil_tree.Write()
+    
+    recoil_outfile.Close()

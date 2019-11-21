@@ -17,6 +17,8 @@ keep LHEScaleWeight
 keep LHEWeight_rwgt_*
 keep MET_pt
 keep MET_phi
+keep MET_MetUnclustEnUpDeltaX
+keep MET_MetUnclustEnUpDeltaY
 keep RawMET_pt
 keep RawMET_phi
 keep PV_npvs

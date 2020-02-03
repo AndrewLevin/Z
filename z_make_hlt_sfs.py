@@ -4,6 +4,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("--year",type=str,help="Data-taking year",required=True)
 parser.add_argument("--plotdir",type=str,help="Output directory for plots",default="/eos/user/a/amlevin/www/tmp/")
+parser.add_argument("--outfile",type=str,help="Output root filename",required=True)
 
 args = parser.parse_args()
 
@@ -40,7 +41,7 @@ rinterface_mc_fail=rinterface_mc.Filter("!probe_passHLT")
 from array import array
 
 if args.year == "2016":
-    binning_pt = array('f',[35,50,60,70,100,150,200,500])
+    binning_pt = array('f',[30,40,50,60,70,100,150,200,500])
     binning_eta = array('f', [-2.5,-2.0,-1.566,-1.444,-0.8,0,0.8,1.444,1.566,2.0,2.5]) 
 elif args.year == "2017":
     binning_pt = array('f',[35,50,60,70,100,150,200,500])
@@ -263,3 +264,7 @@ h_etapt_sf.Draw("colz")
 
 c7.SaveAs(args.plotdir+"/sf_"+args.year+"_etapt.png")
 
+outfile=ROOT.TFile(args.outfile,"recreate")
+outfile.cd()
+h_etapt_sf.Write("hlt_sfs_etapt")
+outfile.Close()

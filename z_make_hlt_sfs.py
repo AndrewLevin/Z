@@ -110,6 +110,10 @@ h_mc_etapt_den.Add(h_mc_pass_etapt)
 h_mc_etapt_den.Add(h_mc_fail_etapt)
 h_mc_etapt_eff.Add(h_mc_pass_etapt)
 h_mc_etapt_eff.Divide(h_mc_etapt_den)
+h_mc_pass_etapt.GetYaxis().SetTitle("p_{T} (GeV)")
+h_mc_pass_etapt.GetXaxis().SetTitle("\eta")
+h_mc_etapt_den.GetYaxis().SetTitle("p_{T} (GeV)")
+h_mc_etapt_den.GetXaxis().SetTitle("\eta")
 teff_mc_etapt=ROOT.TEfficiency(h_mc_pass_etapt,h_mc_etapt_den)
 h_mc_eta_den.Add(h_mc_pass_eta)
 h_mc_eta_den.Add(h_mc_fail_eta)
@@ -170,6 +174,10 @@ h_data_etapt_den.Add(h_data_pass_etapt)
 h_data_etapt_den.Add(h_data_fail_etapt)
 h_data_etapt_eff.Add(h_data_pass_etapt)
 h_data_etapt_eff.Divide(h_data_etapt_den)
+h_data_pass_etapt.GetYaxis().SetTitle("p_{T} (GeV)")
+h_data_pass_etapt.GetXaxis().SetTitle("\eta")
+h_data_etapt_den.GetYaxis().SetTitle("p_{T} (GeV)")
+h_data_etapt_den.GetXaxis().SetTitle("\eta")
 teff_data_etapt=ROOT.TEfficiency(h_data_pass_etapt,h_data_etapt_den)
 h_data_eta_den.Add(h_data_pass_eta)
 h_data_eta_den.Add(h_data_fail_eta)
@@ -190,7 +198,7 @@ c1 = ROOT.TCanvas("c1","c1")
 #h_data_eta_eff.Draw()
 teff_data_eta.Draw()
 
-c1.SaveAs(args.plotdir+"/data_"+args.year+"_eta.png")
+c1.SaveAs(args.plotdir+"/eff_data_"+args.year+"_eta.png")
 
 c2 = ROOT.TCanvas("c2","c2")
 
@@ -201,7 +209,7 @@ c2 = ROOT.TCanvas("c2","c2")
 
 teff_data_pt.Draw()
 
-c2.SaveAs(args.plotdir+"/data_"+args.year+"_pt.png")
+c2.SaveAs(args.plotdir+"/eff_data_"+args.year+"_pt.png")
 
 c3 = ROOT.TCanvas("c3","c3")
 
@@ -209,9 +217,11 @@ c3 = ROOT.TCanvas("c3","c3")
 #h_data_pass.Draw("colz")
 #h_data_etapt_eff.SetStats(0)
 #h_data_etapt_eff.Draw("zcol")
+
+teff_data_etapt.SetTitle("HLT Efficiencies in Data")
 teff_data_etapt.Draw("zcol")
 
-c3.SaveAs(args.plotdir+"/data_"+args.year+"_etapt.png")
+c3.SaveAs(args.plotdir+"/eff_data_"+args.year+"_etapt.png")
 
 c4 = ROOT.TCanvas("c4","c4")
 
@@ -222,7 +232,7 @@ c4 = ROOT.TCanvas("c4","c4")
 
 teff_mc_eta.Draw()
 
-c4.SaveAs(args.plotdir+"/mc_"+args.year+"_eta.png")
+c4.SaveAs(args.plotdir+"/eff_mc_"+args.year+"_eta.png")
 
 c5 = ROOT.TCanvas("c5","c5")
 
@@ -233,7 +243,7 @@ c5 = ROOT.TCanvas("c5","c5")
 
 teff_mc_pt.Draw()
 
-c5.SaveAs(args.plotdir+"/mc_"+args.year+"_pt.png")
+c5.SaveAs(args.plotdir+"/eff_mc_"+args.year+"_pt.png")
 
 c6 = ROOT.TCanvas("c6","c6")
 
@@ -242,24 +252,32 @@ c6 = ROOT.TCanvas("c6","c6")
 #h_mc_etapt_eff.SetStats(0)
 #h_mc_etapt_eff.Draw("zcol")
 
-teff_mc_etapt.Draw()
+teff_mc_etapt.SetTitle("HLT Efficiencies in MC")
+teff_mc_etapt.Draw("colz")
 
-c6.SaveAs(args.plotdir+"/mc_"+args.year+"_etapt.png")
+c6.SaveAs(args.plotdir+"/eff_mc_"+args.year+"_etapt.png")
 
 for i in range(h_mc_pass_etapt.GetNbinsX()+2):
     for j in range(h_mc_pass_etapt.GetNbinsY()+2):
         h_mc_etapt_eff.SetBinContent(i,j,teff_mc_etapt.GetEfficiency(teff_mc_etapt.GetGlobalBin(i,j)))
-        h_mc_etapt_eff.SetBinError(i,j,max(teff_mc_etapt.GetEfficiency(teff_mc_etapt.GetGlobalBin(i,j)),teff_mc_etapt.GetEfficiency(teff_mc_etapt.GetGlobalBin(i,j))))
+        h_mc_etapt_eff.SetBinError(i,j,max(teff_mc_etapt.GetEfficiencyErrorLow(teff_mc_etapt.GetGlobalBin(i,j)),teff_mc_etapt.GetEfficiencyErrorUp(teff_mc_etapt.GetGlobalBin(i,j))))
     for j in range(h_data_pass_etapt.GetNbinsY()+2):
         h_data_etapt_eff.SetBinContent(i,j,teff_data_etapt.GetEfficiency(teff_data_etapt.GetGlobalBin(i,j)))
-        h_data_etapt_eff.SetBinError(i,j,max(teff_data_etapt.GetEfficiency(teff_data_etapt.GetGlobalBin(i,j)),teff_data_etapt.GetEfficiency(teff_data_etapt.GetGlobalBin(i,j))))
+        h_data_etapt_eff.SetBinError(i,j,max(teff_data_etapt.GetEfficiencyErrorLow(teff_data_etapt.GetGlobalBin(i,j)),teff_data_etapt.GetEfficiencyErrorUp(teff_data_etapt.GetGlobalBin(i,j))))
 
 h_etapt_sf.Add(h_data_etapt_eff)
+
 h_etapt_sf.Divide(h_mc_etapt_eff)
 
 c7 = ROOT.TCanvas("c7","c7")
 
+#gStyle.SetPaintTextFormat("4.2f")
+
+h_etapt_sf.SetTitle("HLT Efficiency Scale Factors")
 h_etapt_sf.SetStats(0)
+h_etapt_sf.GetYaxis().SetTitle("p_{T} (GeV)")
+h_etapt_sf.GetXaxis().SetTitle("\eta")
+
 h_etapt_sf.Draw("colz")
 
 c7.SaveAs(args.plotdir+"/sf_"+args.year+"_etapt.png")

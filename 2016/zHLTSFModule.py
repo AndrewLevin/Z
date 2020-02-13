@@ -30,9 +30,11 @@ class zHLTSFProducer(Module):
         self.out.branch("lepton1_passHLT",  "B");
         self.out.branch("lepton1_phi",  "F");
         self.out.branch("lepton1_eta",  "F");
+        self.out.branch("lepton1_sceta",  "F");
         self.out.branch("lepton2_pt",  "F");
         self.out.branch("lepton2_phi",  "F");
         self.out.branch("lepton2_eta",  "F");
+        self.out.branch("lepton2_sceta",  "F");
         self.out.branch("lepton2_passHLT",  "B");
         self.out.branch("mll",  "F");
         self.out.branch("met",  "F");
@@ -104,9 +106,11 @@ class zHLTSFProducer(Module):
             self.out.fillBranch("lepton2_pdgid",muons[tight_muons[1]].pdgId)
             self.out.fillBranch("lepton1_pt",muons[tight_muons[0]].pt)
             self.out.fillBranch("lepton1_eta",muons[tight_muons[0]].eta)
+            self.out.fillBranch("lepton1_sceta",0)
             self.out.fillBranch("lepton1_phi",muons[tight_muons[0]].phi)
             self.out.fillBranch("lepton2_pt",muons[tight_muons[1]].pt)
             self.out.fillBranch("lepton2_eta",muons[tight_muons[1]].eta)
+            self.out.fillBranch("lepton2_sceta",0)
             self.out.fillBranch("lepton2_phi",muons[tight_muons[1]].phi)
             self.out.fillBranch("mll",(muons[tight_muons[0]].p4() + muons[tight_muons[1]].p4()).M())
 
@@ -121,9 +125,11 @@ class zHLTSFProducer(Module):
             self.out.fillBranch("lepton2_pdgid",electrons[tight_electrons[1]].pdgId)
             self.out.fillBranch("lepton1_pt",electrons[tight_electrons[0]].pt)
             self.out.fillBranch("lepton1_eta",electrons[tight_electrons[0]].eta)
+            self.out.fillBranch("lepton1_sceta",electrons[tight_electrons[0]].eta+electrons[tight_electrons[0]].deltaEtaSC)
             self.out.fillBranch("lepton1_phi",electrons[tight_electrons[0]].phi)
             self.out.fillBranch("lepton2_pt",electrons[tight_electrons[1]].pt)
             self.out.fillBranch("lepton2_eta",electrons[tight_electrons[1]].eta)
+            self.out.fillBranch("lepton2_sceta",electrons[tight_electrons[1]].eta+electrons[tight_electrons[1]].deltaEtaSC)
             self.out.fillBranch("lepton2_phi",electrons[tight_electrons[1]].phi)
             self.out.fillBranch("mll",(electrons[tight_electrons[0]].p4()+electrons[tight_electrons[1]].p4()).M())
             lepton1_passHLT = False

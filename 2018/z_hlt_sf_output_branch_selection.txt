@@ -4,9 +4,11 @@ keep puWeightUp
 keep puWeightDown
 keep lepton1_pt
 keep lepton1_eta
+keep lepton1_sceta
 keep lepton1_phi
 keep lepton2_pt
 keep lepton2_eta
+keep lepton2_sceta
 keep lepton2_phi
 keep lepton1_passHLT
 keep lepton2_passHLT

@@ -636,6 +636,7 @@ c1 = ROOT.TCanvas("c1","c1")
 #h_data_pass.Draw("colz")
 #h_data_eta_eff.SetStats(0)
 #h_data_eta_eff.Draw()
+teff_data1_eta.SetTitle("HLT Efficiencies;\eta")
 teff_data1_eta.Draw()
 
 c1.SaveAs(args.plotdir+"/eff_data1_"+args.year+"_eta.png")
@@ -646,7 +647,7 @@ c2 = ROOT.TCanvas("c2","c2")
 #h_data_pass.Draw("colz")
 #h_data_pt_eff.SetStats(0)
 #h_data_pt_eff.Draw()
-
+teff_data1_pt.SetTitle("HLT Efficiencies;p_{T} (GeV)")
 teff_data1_pt.Draw()
 
 c2.SaveAs(args.plotdir+"/eff_data1_"+args.year+"_pt.png")
@@ -735,7 +736,7 @@ c10 = ROOT.TCanvas("c10","c10")
 #h_mc_pass.Draw("colz")
 #h_mc_eta_eff.SetStats(0)
 #h_mc_eta_eff.Draw()
-
+teff_mc1_eta.SetTitle("HLT Efficiencies;\eta")
 teff_mc1_eta.Draw()
 
 c10.SaveAs(args.plotdir+"/eff_mc1_"+args.year+"_eta.png")
@@ -746,7 +747,7 @@ c11 = ROOT.TCanvas("c11","c11")
 #h_mc_pass.Draw("colz")
 #h_mc_pt_eff.SetStats(0)
 #h_mc_pt_eff.Draw()
-
+teff_mc1_pt.SetTitle("HLT Efficiencies;p_{T} (GeV)")
 teff_mc1_pt.Draw()
 
 c11.SaveAs(args.plotdir+"/eff_mc1_"+args.year+"_pt.png")
@@ -877,7 +878,7 @@ h_etapt_sf1.Add(h_data1_etapt_eff)
 
 h_etapt_sf1.Divide(h_mc1_etapt_eff)
 
-c23 = ROOT.TCanvas("c23","c23")
+c22 = ROOT.TCanvas("c22","c22")
 
 #gStyle.SetPaintTextFormat("4.2f")
 
@@ -888,7 +889,53 @@ h_etapt_sf1.GetXaxis().SetTitle("\eta")
 
 h_etapt_sf1.Draw("colz")
 
-c23.SaveAs(args.plotdir+"/sf1_"+args.year+"_etapt.png")
+c22.SaveAs(args.plotdir+"/sf1_"+args.year+"_etapt.png")
+
+for i in range(h_mc1_pass_eta.GetNbinsX()+2):
+    for j in range(h_mc1_pass_etapt.GetNbinsY()+2):
+        h_mc1_eta_eff.SetBinContent(i,j,teff_mc1_eta.GetEfficiency(teff_mc1_eta.GetGlobalBin(i)))
+        h_mc1_eta_eff.SetBinError(i,j,max(teff_mc1_eta.GetEfficiencyErrorLow(teff_mc1_eta.GetGlobalBin(i)),teff_mc1_eta.GetEfficiencyErrorUp(teff_mc1_eta.GetGlobalBin(i))))
+    for j in range(h_data1_pass_eta.GetNbinsY()+2):
+        h_data1_eta_eff.SetBinContent(i,j,teff_data1_eta.GetEfficiency(teff_data1_eta.GetGlobalBin(i)))
+        h_data1_eta_eff.SetBinError(i,j,max(teff_data1_eta.GetEfficiencyErrorLow(teff_data1_eta.GetGlobalBin(i)),teff_data1_eta.GetEfficiencyErrorUp(teff_data1_eta.GetGlobalBin(i))))
+
+h_eta_sf1.Add(h_data1_eta_eff)
+
+h_eta_sf1.Divide(h_mc1_eta_eff)
+
+c23 = ROOT.TCanvas("c23","c23")
+
+#gStyle.SetPaintTextFormat("4.2f")
+
+h_eta_sf1.SetTitle("HLT Efficiency Scale Factors")
+h_eta_sf1.SetStats(0)
+h_eta_sf1.GetXaxis().SetTitle("\eta")
+
+h_eta_sf1.Draw()
+
+c23.SaveAs(args.plotdir+"/sf1_"+args.year+"_eta.png")
+
+for i in range(h_mc1_pass_pt.GetNbinsX()+2):
+        h_mc1_pt_eff.SetBinContent(i,teff_mc1_pt.GetEfficiency(teff_mc1_pt.GetGlobalBin(i)))
+        h_mc1_pt_eff.SetBinError(i,max(teff_mc1_pt.GetEfficiencyErrorLow(teff_mc1_pt.GetGlobalBin(i)),teff_mc1_pt.GetEfficiencyErrorUp(teff_mc1_pt.GetGlobalBin(i))))
+        h_data1_pt_eff.SetBinContent(i,teff_data1_pt.GetEfficiency(teff_data1_pt.GetGlobalBin(i)))
+        h_data1_pt_eff.SetBinError(i,max(teff_data1_pt.GetEfficiencyErrorLow(teff_data1_pt.GetGlobalBin(i)),teff_data1_pt.GetEfficiencyErrorUp(teff_data1_pt.GetGlobalBin(i))))
+
+h_pt_sf1.Add(h_data1_pt_eff)
+
+h_pt_sf1.Divide(h_mc1_pt_eff)
+
+c24 = ROOT.TCanvas("c24","c24")
+
+#gStyle.SetPaintTextFormat("4.2f")
+
+h_pt_sf1.SetTitle("HLT Efficiency Scale Factors")
+h_pt_sf1.SetStats(0)
+h_pt_sf1.GetXaxis().SetTitle("p_{T} (GeV)")
+
+h_pt_sf1.Draw()
+
+c24.SaveAs(args.plotdir+"/sf1_"+args.year+"_pt.png")
 
 for i in range(h_mc2_pass_etapt.GetNbinsX()+2):
     for j in range(h_mc2_pass_etapt.GetNbinsY()+2):
@@ -902,7 +949,7 @@ h_etapt_sf2.Add(h_data1_etapt_eff)
 
 h_etapt_sf2.Divide(h_mc2_etapt_eff)
 
-c24 = ROOT.TCanvas("c24","c24")
+c25 = ROOT.TCanvas("c25","c25")
 
 #gStyle.SetPaintTextFormat("4.2f")
 
@@ -913,21 +960,21 @@ h_etapt_sf2.GetXaxis().SetTitle("\eta")
 
 h_etapt_sf2.Draw("colz")
 
-c24.SaveAs(args.plotdir+"/sf2_"+args.year+"_etapt.png")
+c25.SaveAs(args.plotdir+"/sf2_"+args.year+"_etapt.png")
 
-for i in range(h_mc3_pass_etapt.GetNbinsX()+2):
-    for j in range(h_mc3_pass_etapt.GetNbinsY()+2):
-        h_mc3_etapt_eff.SetBinContent(i,j,teff_mc3_etapt.GetEfficiency(teff_mc3_etapt.GetGlobalBin(i,j)))
-        h_mc3_etapt_eff.SetBinError(i,j,max(teff_mc3_etapt.GetEfficiencyErrorLow(teff_mc3_etapt.GetGlobalBin(i,j)),teff_mc3_etapt.GetEfficiencyErrorUp(teff_mc3_etapt.GetGlobalBin(i,j))))
-    for j in range(h_data2_pass_etapt.GetNbinsY()+2):
-        h_data2_etapt_eff.SetBinContent(i,j,teff_data2_etapt.GetEfficiency(teff_data2_etapt.GetGlobalBin(i,j)))
-        h_data2_etapt_eff.SetBinError(i,j,max(teff_data2_etapt.GetEfficiencyErrorLow(teff_data2_etapt.GetGlobalBin(i,j)),teff_data2_etapt.GetEfficiencyErrorUp(teff_data2_etapt.GetGlobalBin(i,j))))
+for i in range(h_mc2_pass_etapt.GetNbinsX()+2):
+    for j in range(h_mc2_pass_etapt.GetNbinsY()+2):
+        h_mc2_etapt_eff.SetBinContent(i,j,teff_mc2_etapt.GetEfficiency(teff_mc2_etapt.GetGlobalBin(i,j)))
+        h_mc2_etapt_eff.SetBinError(i,j,max(teff_mc2_etapt.GetEfficiencyErrorLow(teff_mc2_etapt.GetGlobalBin(i,j)),teff_mc2_etapt.GetEfficiencyErrorUp(teff_mc2_etapt.GetGlobalBin(i,j))))
+    for j in range(h_data1_pass_etapt.GetNbinsY()+2):
+        h_data1_etapt_eff.SetBinContent(i,j,teff_data1_etapt.GetEfficiency(teff_data1_etapt.GetGlobalBin(i,j)))
+        h_data1_etapt_eff.SetBinError(i,j,max(teff_data1_etapt.GetEfficiencyErrorLow(teff_data1_etapt.GetGlobalBin(i,j)),teff_data1_etapt.GetEfficiencyErrorUp(teff_data1_etapt.GetGlobalBin(i,j))))
 
-h_etapt_sf3.Add(h_data2_etapt_eff)
+h_etapt_sf2.Add(h_data1_etapt_eff)
 
-h_etapt_sf3.Divide(h_mc3_etapt_eff)
+h_etapt_sf2.Divide(h_mc2_etapt_eff)
 
-c25 = ROOT.TCanvas("c25","c25")
+c26 = ROOT.TCanvas("c26","c26")
 
 #gStyle.SetPaintTextFormat("4.2f")
 
@@ -938,7 +985,7 @@ h_etapt_sf3.GetXaxis().SetTitle("\eta")
 
 h_etapt_sf3.Draw("colz")
 
-c25.SaveAs(args.plotdir+"/sf3_"+args.year+"_etapt.png")
+c26.SaveAs(args.plotdir+"/sf3_"+args.year+"_etapt.png")
   
 for i in range(h_mc4_pass_etapt.GetNbinsX()+2):
     for j in range(h_mc4_pass_etapt.GetNbinsY()+2):
@@ -952,7 +999,7 @@ h_etapt_sf4.Add(h_data3_etapt_eff)
 
 h_etapt_sf4.Divide(h_mc4_etapt_eff)
 
-c26 = ROOT.TCanvas("c26","c26")
+c27 = ROOT.TCanvas("c27","c27")
 
 #gStyle.SetPaintTextFormat("4.2f")
 
@@ -963,7 +1010,7 @@ h_etapt_sf4.GetXaxis().SetTitle("\eta")
 
 h_etapt_sf4.Draw("colz")
 
-c26.SaveAs(args.plotdir+"/sf4_"+args.year+"_etapt.png")
+c27.SaveAs(args.plotdir+"/sf4_"+args.year+"_etapt.png")
 
 from math import sqrt
 

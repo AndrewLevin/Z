@@ -154,6 +154,8 @@ elif args.year == "2018":
 else:
     assert(0)
 
+
+th1dmodel_mll=ROOT.RDF.TH1DModel("", "", 60, 60, 120)
 th1dmodel_eta=ROOT.RDF.TH1DModel("", "", len(binning_eta)-1, binning_eta)
 th1dmodel_pt=ROOT.RDF.TH1DModel("", "", len(binning_pt)-1, binning_pt)
 th2dmodel_etapt=ROOT.RDF.TH2DModel("", "", len(binning_eta)-1, binning_eta, len(binning_pt)-1,binning_pt)
@@ -468,12 +470,25 @@ rinterface_data2_fail=rinterface_data2.Filter("!probe_passHLT")
 rinterface_data3_pass=rinterface_data3.Filter("probe_passHLT")
 rinterface_data3_fail=rinterface_data3.Filter("!probe_passHLT")
 
+
+rinterface_data1_fail_filters=[]
+rresultptr_data1_fail_mll=[]
+h_data1_fail_mll_labels=[]
+for i in range(1,th2dmodel_etapt.GetHistogram().GetNbinsX()+1):
+    for j in range(1,th2dmodel_etapt.GetHistogram().GetNbinsY()+1):
+        rinterface_data1_fail_filters.append(rinterface_data1_fail.Filter(str(th2dmodel_etapt.GetHistogram().GetYaxis().GetBinLowEdge(j))+"< probe_pt && probe_pt < "+str(th2dmodel_etapt.GetHistogram().GetYaxis().GetBinUpEdge(j))+" && "+str(th2dmodel_etapt.GetHistogram().GetXaxis().GetBinLowEdge(i)) + " < probe_eta && probe_eta > "+str(th2dmodel_etapt.GetHistogram().GetXaxis().GetBinUpEdge(i))))
+        h_data1_fail_mll_labels.append("pt"+str(th2dmodel_etapt.GetHistogram().GetYaxis().GetBinLowEdge(j))+"to"+str(th2dmodel_etapt.GetHistogram().GetYaxis().GetBinUpEdge(j))+"eta"+str(th2dmodel_etapt.GetHistogram().GetXaxis().GetBinLowEdge(i))+"to"+str(th2dmodel_etapt.GetHistogram().GetXaxis().GetBinUpEdge(i)))
+        rresultptr_data1_fail_mll.append(rinterface_data1_fail_filters[len(rinterface_data1_fail_filters)-1].Histo1D(th1dmodel_mll,"mll"))
+        rresultptr_data1_fail_mll[len(rresultptr_data1_fail_mll)-1].Sumw2()
+
 rresultptr_data1_pass_etapt=rinterface_data1_pass.Histo2D(th2dmodel_etapt,"probe_eta","probe_pt")
 rresultptr_data1_fail_etapt=rinterface_data1_fail.Histo2D(th2dmodel_etapt,"probe_eta","probe_pt")
 rresultptr_data1_pass_eta=rinterface_data1_pass.Histo1D(th1dmodel_eta,"probe_eta")
 rresultptr_data1_fail_eta=rinterface_data1_fail.Histo1D(th1dmodel_eta,"probe_eta")
 rresultptr_data1_pass_pt=rinterface_data1_pass.Histo1D(th1dmodel_pt,"probe_pt")
 rresultptr_data1_fail_pt=rinterface_data1_fail.Histo1D(th1dmodel_pt,"probe_pt")
+
+
 
 rresultptr_data1_pass_etapt.Sumw2()
 rresultptr_data1_fail_etapt.Sumw2()
@@ -510,6 +525,10 @@ rresultptr_data3_fail_eta.Sumw2()
 rresultptr_data3_pass_pt.Sumw2()
 rresultptr_data3_fail_pt.Sumw2()
 
+h_data1_fail_mll=[]
+for i in range(len(rresultptr_data1_fail_mll)):
+        h_data1_fail_mll.append(rresultptr_data1_fail_mll[i].GetValue())
+
 h_data1_pass_etapt=rresultptr_data1_pass_etapt.GetValue()
 h_data1_fail_etapt=rresultptr_data1_fail_etapt.GetValue()
 h_data1_pass_eta=rresultptr_data1_pass_eta.GetValue()
@@ -530,6 +549,14 @@ h_data3_pass_eta=rresultptr_data3_pass_eta.GetValue()
 h_data3_fail_eta=rresultptr_data3_fail_eta.GetValue()
 h_data3_pass_pt=rresultptr_data3_pass_pt.GetValue()
 h_data3_fail_pt=rresultptr_data3_fail_pt.GetValue()
+
+c=[]
+for i in range(len(h_data1_fail_mll)):
+    c.append(ROOT.TCanvas("c"+str(i)+"_mll","c"+str(i)+"_mll"))
+    h_data1_fail_mll[i].SetStats(0)
+    h_data1_fail_mll[i].GetXaxis().SetTitle("m_{ll} (GeV)")
+    h_data1_fail_mll[i].Draw()
+    c[len(c)-1].SaveAs(args.plotdir+"/mll_"+h_data1_fail_mll_labels[i]+".png")
 
 h_data1_etapt_den=th2dmodel_etapt.GetHistogram().Clone()
 h_data1_etapt_eff=th2dmodel_etapt.GetHistogram().Clone()
